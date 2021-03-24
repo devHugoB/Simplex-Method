@@ -117,7 +117,11 @@ class Simplex:
         current_number = cl[idx_min + 1]
         current_number_idx = current_ln.index(current_number)
 
-        self.inside[idx_min] = above[current_number_idx]
+        print('\n~~~~~~~~~~~~~~~ TABLEAU SUIVANT ~~~~~~~~~~~~~~~\n')
+        print("Ligne entrante :", self.above[current_number_idx])
+        print("Ligne sortante :", self.inside[idx_min], '\n')
+
+        self.inside[idx_min] = self.above[current_number_idx]
 
         self.calc_new_lines(current_ln, current_number_idx)
 
@@ -229,7 +233,6 @@ class Simplex:
 
             self.tab_ln[self.tab_ln.index(current_ln)] = new_current_ln
 
-        print('\n~~~~~~~~~~~~~~~ TABLEAU SUIVANT ~~~~~~~~~~~~~~~\n')
         self.test_next_tab()
 
 
@@ -245,7 +248,7 @@ if __name__ == "__main__":
     inside = []
     value = [0]
 
-    nb_function = int(input('Combien il y a de x dans la fonction ? '))
+    nb_function = int(input('Combien il y a-t-il de x dans la fonction ? '))
     above = [f'x{i + 1}' for i in range(nb_function)]
 
     print()
@@ -254,7 +257,7 @@ if __name__ == "__main__":
         if str(function[i]).endswith('.0'):
             function[i] = int(function[i])
 
-    nb_contraintes = int(input('\nCombien il y a de contraintes (hors x1, x2, ..., xn >= 0) ? '))
+    nb_contraintes = int(input('\nCombien il y a-t-il de contraintes (hors x1, x2, ..., xn >= 0) ? '))
     line = [f'l{i}' for i in range(nb_contraintes + 1)]
 
     for i in range(nb_contraintes):
