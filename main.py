@@ -42,26 +42,26 @@ class Simplex:
                 if str(float_current_number).endswith('.0'):
                     self.tab_ln[ln][cl] = int(self.tab_ln[ln][cl])
 
-        space = '     '
-        line_tab = '--------' * (len(self.above) + 1)
+        space = f'%-10s'
+        line_tab = '────────────' * (len(self.above) + 2) + '────'
         tab = [
-            ['     '],
-            ['     ', '', f'Z{sign}{value_z}', ' | ', self.lines[0]],
-            ['      ' + line_tab]
+            [space % ''],
+            [space % '', '', f'Z{sign}{value_z}', self.lines[0]],
+            [line_tab]
         ]
         for i in range(len(self.tab_ln[0])):
-            tab[1][1] += str(self.tab_ln[0][i]) + space + '| '
+            tab[1][1] += space % str(self.tab_ln[0][i]) + '│'
 
-        tab[0] += [self.above[i] + '    |' for i in range(len(self.above))]
+        tab[0] += [space % self.above[i] for i in range(len(self.above))]
 
         for i in range(len(self.inside)):
-            tab.append([self.inside[i], '  ', '', self.values[i + 1], '| ', self.lines[i + 1]])
+            tab.append([self.inside[i], '', self.values[i + 1], self.lines[i + 1]])
             for val in range(len(self.tab_ln[i+1])):
-                tab[i+3][2] += str(self.tab_ln[i+1][val]) + space + '| '
+                tab[i+3][1] += space % str(self.tab_ln[i+1][val]) + '│'
 
         for ln in range(len(tab)):
             for cl in range(len(tab[ln])):
-                print(tab[ln][cl], end=' ')
+                print(space % tab[ln][cl], end='│')
             print()
 
     def test_next_tab(self):
@@ -88,9 +88,14 @@ class Simplex:
                 tab_final.append([self.above[i], value_final])
             tab_final[0][1] *= -1
 
+            space = '%-8s'
             for i in range(len(tab_final)):
                 tab_final[i][1] = str(tab_final[i][1])
-                print(f'{tab_final[i][0]} : {tab_final[i][1]}')
+                print(space % tab_final[i][0], end='│')
+            print()
+            for i in range(len(tab_final)):
+                tab_final[i][1] = str(tab_final[i][1])
+                print(space % tab_final[i][1], end='│')
 
             input('\n\nAppuyer sur une touche pour quitter...')
 
@@ -118,6 +123,7 @@ class Simplex:
         current_number_idx = current_ln.index(current_number)
 
         print('\n~~~~~~~~~~~~~~~ TABLEAU SUIVANT ~~~~~~~~~~~~~~~\n')
+        print("Element choisi :", current_number)
         print("Ligne entrante :", self.above[current_number_idx])
         print("Ligne sortante :", self.inside[idx_min], '\n')
 
