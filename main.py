@@ -31,6 +31,32 @@ def which_number_types(result, number1, number2):
         return round(float(result), 2)
 
 
+def stop_calc(values, above):
+    print('\n----- FIN DES CALCULS -----\n')
+    tab_final = [['z0', values[0]]]
+
+    for i in range(len(above)):
+        if above[i] in inside:
+            value_final = values[inside.index(above[i]) + 1]
+        else:
+            value_final = 0
+
+        tab_final.append([above[i], value_final])
+    tab_final[0][1] *= -1
+
+    space = '%-8s'
+    for i in range(len(tab_final)):
+        tab_final[i][1] = str(tab_final[i][1])
+        print(space % tab_final[i][0], end='│')
+    print()
+    for i in range(len(tab_final)):
+        tab_final[i][1] = str(tab_final[i][1])
+        print(space % tab_final[i][1], end='│')
+
+    input('\n\nAppuyer sur une touche pour quitter...')
+    exit(0)
+
+
 ###################
 # SIMPLEX DEUXIEME ESPECE
 ###################
@@ -66,54 +92,358 @@ class DoubleSimplex:
             self.tab_ln.append(self.constraints[i] + self.e_inside[i] + self.f_inside[i] + self.a_inside[i])
 
     def gen_tab(self):
-        if str(self.values[0]).startswith('-') or self.values[0] == 0:
-            value_z_prime = self.values[0] * -1
-            sign_prime = '+'
-        else:
-            value_z_prime = self.values[0]
-            sign_prime = '-'
-
-        if str(self.values[1]).startswith('-') or self.values[1] == 0:
-            value_z = self.values[1] * -1
-            sign = '-'
-        else:
-            value_z = self.values[1]
-            sign = '+'
-
         for ln in range(len(self.tab_ln)):
             for cl in range(len(self.tab_ln[ln])):
                 float_current_number = float(self.tab_ln[ln][cl])
                 if str(float_current_number).endswith('.0'):
                     self.tab_ln[ln][cl] = int(self.tab_ln[ln][cl])
 
-        space = f'%-10s'
-        line_tab = '────────────' * (len(self.above) + 2)
-        tab = [
-            [space % ''],
-            [space % '', '', f'-Z\'{sign_prime}{value_z_prime}', self.lines[0]],
-            [space % '', '', f'Z{sign}{value_z}', self.lines[1]],
-            [line_tab]
-        ]
+        space = f'%-12s'
 
-        for i in range(len(self.tab_ln[0])):
-            tab[1][1] += space % str(self.tab_ln[0][i]) + '│'
-        for i in range(len(self.tab_ln[0])):
-            tab[2][1] += space % str(self.tab_ln[1][i]) + '│'
+        if self.phase == 1:
+            if not str(self.values[0]).startswith('-') or self.values[0] == 0:
+                value_z_prime = self.values[0]
+                sign_prime = '+'
+            else:
+                value_z_prime = self.values[0] * -1
+                sign_prime = '-'
+            line_tab = '──────────────' * (len(self.above) + 2) + '──'
+            tab = [
+                [space % ''],
+                [space % '', '', f'-Z\'{sign_prime}{value_z_prime}', self.lines[0]],
+                [space % '', '', f'Z', self.lines[1]],
+                [line_tab]
+            ]
 
-        tab[0] += [space % self.above[i] for i in range(len(self.above))]
+            for i in range(len(self.tab_ln[0])):
+                tab[1][1] += space % str(self.tab_ln[0][i]) + '│'
+            for i in range(len(self.tab_ln[1])):
+                tab[2][1] += space % str(self.tab_ln[1][i]) + '│'
 
-        for i in range(len(self.inside)):
-            tab.append([self.inside[i], '', self.values[i + 2], self.lines[i + 2]])
-            for val in range(len(self.tab_ln[i + 1])):
-                tab[i + 4][1] += space % str(self.tab_ln[i + 2][val]) + '│'
+            tab[0] += [space % self.above[i] for i in range(len(self.above))]
+
+            for i in range(len(self.inside)):
+                tab.append([self.inside[i], '', self.values[i + 2], self.lines[i + 2]])
+                for val in range(len(self.tab_ln[i + 1])):
+                    tab[i + 4][1] += space % str(self.tab_ln[i + 2][val]) + '│'
+
+        else:
+            if str(self.values[0]).startswith('-') or self.values[0] == 0:
+                value_z = self.values[0] * -1
+                sign = '-'
+            else:
+                value_z = self.values[0]
+                sign = '+'
+
+            line_tab = '───────────' * (len(self.above) + 4) + '─────────'
+            tab = [
+                [space % ''],
+                [space % '', '', f'Z{sign}{value_z}', self.lines[0]],
+                [line_tab]
+            ]
+            for i in range(len(self.tab_ln[0])):
+                tab[1][1] += space % str(self.tab_ln[0][i]) + '│'
+
+            tab[0] += [space % self.above[i] for i in range(len(self.above))]
+
+            for i in range(len(self.inside)):
+                tab.append([self.inside[i], '', self.values[i + 1], self.lines[i + 1]])
+                for val in range(len(self.tab_ln[i + 1])):
+                    tab[i + 3][1] += space % str(self.tab_ln[i + 1][val]) + '│'
 
         for ln in range(len(tab)):
             for cl in range(len(tab[ln])):
                 print(space % tab[ln][cl], end='│')
             print()
 
-        input('\n\nAppuyer sur une touche pour quitter...')
-        exit(0)
+    def test_next_tab(self):
+        self.gen_tab()
+
+        if self.phase == 1:
+            for i in range(-1, len(self.lines)):
+                self.lines[i] = f'l{i - 1}'
+        else:
+            for i in range(len(self.lines)):
+                self.lines[i] = f'l{i}'
+
+        if self.phase == 1 and self.iterations == 0:
+            self.calc_new_phase()
+
+        max_value = max(self.tab_ln[0])
+        idx = self.tab_ln[0].index(max_value)
+
+        if self.phase == 1 and self.iterations != 0 and max_value > 0:
+            self.calc_next_tab(max_value, idx)
+
+        elif self.phase == 1 and self.iterations != 0 and max_value <= 0:
+            self.iterations = 0
+            self.phase = 2
+
+            self.calc_new_phase()
+
+        elif self.phase == 2 and self.iterations != 0 and max_value > 0:
+            self.calc_next_tab(max_value, idx)
+
+        elif self.phase == 2 and self.iterations != 0 and max_value <= 0:
+            stop_calc(self.values, self.above)
+
+    def calc_new_phase(self):
+        print('\n#######################')
+        print(f'####### PHASE {self.phase} #######')
+        print('#######################\n')
+
+        self.iterations += 1
+
+        if self.phase == 1:
+            a_idx = []
+            for i in range(len(self.inside)):
+                if str(self.inside[i]).startswith('a'):
+                    a_idx.append(self.inside.index(self.inside[i]) + 2)
+
+                    self.lines[0] += f' + {self.lines[i]}'
+
+            for i in range(len(a_idx)):
+                for val in range(len(self.tab_ln[0])):
+                    self.tab_ln[0][val] += self.tab_ln[a_idx[i]][val]
+                    self.tab_ln[0][val] = which_number_types(self.tab_ln[0][val], self.tab_ln[0][val], 1)
+                self.values[0] += self.values[a_idx[i]]
+                self.values[0] = which_number_types(self.values[0], self.values[0], 1)
+
+        else:
+            self.values = self.values[1:]
+            self.lines = self.lines[1:]
+            self.tab_ln = self.tab_ln[1:]
+            for i in range(len(self.tab_ln)):
+                self.tab_ln[i] = self.tab_ln[i][:-len(self.a_top)]
+            self.above = self.above[:-len(self.a_top)]
+
+            x_idx = []
+            un_idx = []
+            for i in range(len(self.inside)):
+                if str(self.inside[i]).startswith('x'):
+                    x_idx.append([self.inside.index(self.inside[i]) + 1])
+
+            for i in range(len(x_idx)):
+                for val in range(len(self.tab_ln[x_idx[i][0]])):
+                    if self.tab_ln[x_idx[i][0]][val] == 1:
+                        un_idx.append(val)
+                        x_idx[i].append(self.tab_ln[0][val])
+                        break
+
+            x_tab = []
+            for i in range(len(un_idx)):
+                x_min_idx = un_idx.index(min(un_idx))
+                x_tab.append(x_idx[x_min_idx])
+                del x_idx[x_min_idx]
+                del un_idx[x_min_idx]
+
+            for i in range(len(x_tab)):
+                self.lines[0] += f' -{x_tab[i][1]} {self.lines[x_tab[i][0]]}'
+                for val in range(len(self.tab_ln[1])):
+                    self.tab_ln[0][val] -= (self.tab_ln[x_tab[i][0]][val] * x_tab[i][1])
+                    self.tab_ln[0][val] = which_number_types(self.tab_ln[0][val], self.tab_ln[0][val], 1)
+                self.values[0] -= (self.values[x_tab[i][0]] * x_tab[i][1])
+                self.values[0] = which_number_types(self.values[0], self.values[0], 1)
+
+        self.test_next_tab()
+
+    def calc_next_tab(self, val_top, idx):
+        cl = [val_top]
+        for i in range(1, len(self.tab_ln)):
+            cl.append(self.tab_ln[i][idx])
+
+        tab_value = []
+
+        if self.phase == 1:
+            for i in range(2, len(cl)):
+                if cl[i] > 0:
+                    tab_value.append(self.values[i] / cl[i])
+                    tab_value[i - 2] = which_number_types(tab_value[i - 2], self.values[i], cl[i])
+                else:
+                    tab_value.append(100000000)
+
+            min_value = min(tab_value)
+            idx_min = tab_value.index(min_value)
+            current_ln = self.tab_ln[idx_min + 2]
+            current_number = cl[idx_min + 2]
+            current_number_idx = current_ln.index(current_number)
+
+        else:
+            for i in range(1, len(cl)):
+                if cl[i] > 0:
+                    tab_value.append(self.values[i] / cl[i])
+                    tab_value[i - 1] = which_number_types(tab_value[i - 1], self.values[i], cl[i])
+                else:
+                    tab_value.append(100000000)
+
+            min_value = min(tab_value)
+            idx_min = tab_value.index(min_value)
+            current_ln = self.tab_ln[idx_min + 1]
+            current_number = cl[idx_min + 1]
+            current_number_idx = current_ln.index(current_number)
+
+        self.iterations += 1
+
+        print('\n~~~~~~~~~~~~~~~ TABLEAU SUIVANT ~~~~~~~~~~~~~~~\n')
+        print(f"Phase n°{self.phase}")
+        print(f"Itérations n°{self.iterations}")
+        print("────────────────────")
+        print("Element choisi :", current_number)
+        print("Ligne entrante :", self.above[current_number_idx])
+        print("Ligne sortante :", self.inside[idx_min], '\n')
+
+        self.inside[idx_min] = self.above[current_number_idx]
+
+        if self.phase == 1:
+            self.calc_new_zprime_lines(current_ln, current_number_idx)
+        else:
+            self.calc_new_z_lines(current_ln, current_number_idx)
+
+    def calc_new_zprime_lines(self, current_ln, idx):
+        new_current_ln = []
+        new_value = -1
+        current_name_ln = self.lines[self.tab_ln.index(current_ln)]
+        current_val_ln = current_ln
+
+        for i in range(len(self.tab_ln)):
+            if i == 1:
+                continue
+            if (self.tab_ln[i][idx] != 0 and current_val_ln != self.tab_ln[i]) or \
+                    (current_val_ln == self.tab_ln[i] and current_val_ln[idx] != 1):
+
+                if self.tab_ln[i][idx] != 0 and current_val_ln != self.tab_ln[i]:
+                    factor = self.tab_ln[i][idx] / current_val_ln[idx]
+
+                    factor = which_number_types(factor, self.tab_ln[i][idx], current_val_ln[idx])
+
+                else:
+                    factor = 1 / current_val_ln[idx]
+
+                    factor = which_number_types(factor, 1, current_val_ln[idx])
+
+                current_ln_with_factor = [i * abs(factor) for i in current_val_ln]
+
+                if self.tab_ln[i][idx] > 0 and current_val_ln != self.tab_ln[i]:
+                    for val in range(len(self.tab_ln[i])):
+                        self.tab_ln[i][val] -= current_ln_with_factor[val]
+
+                elif self.tab_ln[i][idx] < 0 and current_val_ln != self.tab_ln[i]:
+                    for val in range(len(self.tab_ln[i])):
+                        self.tab_ln[i][val] += current_ln_with_factor[val]
+
+                else:
+                    for val in range(len(self.tab_ln[i])):
+                        new_current_ln.append(current_ln_with_factor[val])
+
+                for val in range(len(self.tab_ln[i])):
+                    self.tab_ln[i][val] = which_number_types(self.tab_ln[i][val], self.tab_ln[i][val], 1)
+
+                if str(factor).startswith('-'):
+                    sign = '+'
+                else:
+                    sign = '-'
+
+                if factor != 1 and factor != -1 and self.tab_ln[i] != current_val_ln:
+                    self.lines[i] += f' {sign}{abs(factor)} {current_name_ln}'
+                elif self.tab_ln[i] != current_val_ln:
+                    self.lines[i] += f' {sign}{current_name_ln}'
+                else:
+                    self.lines[i] = f'{abs(factor)} {current_name_ln}'
+
+                if self.tab_ln[i] != current_val_ln:
+                    self.values[i] -= (factor * self.values[self.tab_ln.index(current_val_ln)])
+                else:
+                    new_value = factor * self.values[self.tab_ln.index(current_val_ln)]
+
+                self.values[i] = which_number_types(self.values[i], self.values[i], 1)
+
+            else:
+                continue
+
+        if new_value != -1:
+            new_value = which_number_types(new_value, new_value, 1)
+
+            self.values[self.tab_ln.index(current_ln)] = new_value
+
+        if len(new_current_ln) > 0:
+            for i in range(len(new_current_ln)):
+                new_current_ln[i] = which_number_types(new_current_ln[i], new_current_ln[i], 1)
+
+            self.tab_ln[self.tab_ln.index(current_ln)] = new_current_ln
+
+        self.test_next_tab()
+
+    def calc_new_z_lines(self, current_ln, idx):
+        new_current_ln = []
+        new_value = -1
+        current_name_ln = self.lines[self.tab_ln.index(current_ln)]
+        current_val_ln = current_ln
+
+        for i in range(len(self.tab_ln)):
+            if (self.tab_ln[i][idx] != 0 and current_val_ln != self.tab_ln[i]) or \
+                    (current_val_ln == self.tab_ln[i] and current_val_ln[idx] != 1):
+
+                if self.tab_ln[i][idx] != 0 and current_val_ln != self.tab_ln[i]:
+                    factor = self.tab_ln[i][idx] / current_val_ln[idx]
+
+                    factor = which_number_types(factor, self.tab_ln[i][idx], current_val_ln[idx])
+
+                else:
+                    factor = 1 / current_val_ln[idx]
+
+                    factor = which_number_types(factor, 1, current_val_ln[idx])
+
+                current_ln_with_factor = [i * abs(factor) for i in current_val_ln]
+
+                if self.tab_ln[i][idx] > 0 and current_val_ln != self.tab_ln[i]:
+                    for val in range(len(self.tab_ln[i])):
+                        self.tab_ln[i][val] -= current_ln_with_factor[val]
+
+                elif self.tab_ln[i][idx] < 0 and current_val_ln != self.tab_ln[i]:
+                    for val in range(len(self.tab_ln[i])):
+                        self.tab_ln[i][val] += current_ln_with_factor[val]
+
+                else:
+                    for val in range(len(self.tab_ln[i])):
+                        new_current_ln.append(current_ln_with_factor[val])
+
+                for val in range(len(self.tab_ln[i])):
+                    self.tab_ln[i][val] = which_number_types(self.tab_ln[i][val], self.tab_ln[i][val], 1)
+
+                if str(factor).startswith('-'):
+                    sign = '+'
+                else:
+                    sign = '-'
+
+                if factor != 1 and factor != -1 and self.tab_ln[i] != current_val_ln:
+                    self.lines[i] += f' {sign}{abs(factor)} {current_name_ln}'
+                elif self.tab_ln[i] != current_val_ln:
+                    self.lines[i] += f' {sign}{current_name_ln}'
+                else:
+                    self.lines[i] = f'{abs(factor)} {current_name_ln}'
+
+                if self.tab_ln[i] != current_val_ln:
+                    self.values[i] -= (factor * self.values[self.tab_ln.index(current_val_ln)])
+                else:
+                    new_value = factor * self.values[self.tab_ln.index(current_val_ln)]
+
+                self.values[i] = which_number_types(self.values[i], self.values[i], 1)
+
+            else:
+                continue
+
+        if new_value != -1:
+            new_value = which_number_types(new_value, new_value, 1)
+
+            self.values[self.tab_ln.index(current_ln)] = new_value
+
+        if len(new_current_ln) > 0:
+            for i in range(len(new_current_ln)):
+                new_current_ln[i] = which_number_types(new_current_ln[i], new_current_ln[i], 1)
+
+            self.tab_ln[self.tab_ln.index(current_ln)] = new_current_ln
+
+        self.test_next_tab()
 
 
 ###################
@@ -186,29 +516,7 @@ class SimpleSimplex:
         if max_value > 0:
             self.calc_next_tab(max_value, idx)
         else:
-            print('\n----- FIN DES CALCULS -----\n')
-            tab_final = [['z0', self.values[0]]]
-
-            for i in range(len(self.above)):
-                if self.above[i] in self.inside:
-                    value_final = self.values[self.inside.index(self.above[i]) + 1]
-                else:
-                    value_final = 0
-
-                tab_final.append([self.above[i], value_final])
-            tab_final[0][1] *= -1
-
-            space = '%-8s'
-            for i in range(len(tab_final)):
-                tab_final[i][1] = str(tab_final[i][1])
-                print(space % tab_final[i][0], end='│')
-            print()
-            for i in range(len(tab_final)):
-                tab_final[i][1] = str(tab_final[i][1])
-                print(space % tab_final[i][1], end='│')
-
-            input('\n\nAppuyer sur une touche pour quitter...')
-            exit(0)
+            stop_calc(self.values, self.above)
 
     def calc_next_tab(self, val_top, idx):
         cl = [val_top]
@@ -327,7 +635,7 @@ if __name__ == "__main__":
     inside = []
     value = [0]
 
-    witch_simplex = str(input('Simplex de première ou seconde espèce ? (1/2) '))
+    which_simplex = str(input('Simplex de première ou seconde espèce ? (1/2) '))
 
     nb_function = int(input('\nCombien il y a-t-il de x dans la fonction ? '))
     above = [f'x{i + 1}' for i in range(nb_function)]
@@ -340,7 +648,7 @@ if __name__ == "__main__":
 
     nb_contraintes = int(input('\nCombien il y a-t-il de contraintes (hors x1, x2, ..., xn >= 0) ? '))
 
-    if witch_simplex == '1':
+    if which_simplex == '1':
         line = [f'l{i}' for i in range(nb_contraintes + 1)]
         for i in range(nb_contraintes):
             print()
@@ -375,7 +683,7 @@ if __name__ == "__main__":
         simplex.gen_ln()
         simplex.test_next_tab()
 
-    elif witch_simplex == '2':
+    elif which_simplex == '2':
         value.append(0)
         function_top = []
         e_top2 = []
@@ -473,7 +781,7 @@ if __name__ == "__main__":
         simplex = DoubleSimplex(function, function_top, contraintes, value, e_top, e_top2, e_inside, f_top, f_top2,
                                 f_inside, a_top, a_top2, a_inside, above, inside, line)
         simplex.gen_ln()
-        simplex.gen_tab()
+        simplex.test_next_tab()
 
     else:
         '\n\nERREUR ! 1 ou 2 attendu...'
