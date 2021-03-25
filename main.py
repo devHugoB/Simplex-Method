@@ -152,8 +152,6 @@ class SimpleSimplex:
                 if str(float_current_number).endswith('.0'):
                     self.tab_ln[ln][cl] = int(self.tab_ln[ln][cl])
 
-            print()
-
         space = f'%-10s'
         line_tab = '────────────' * (len(self.above) + 2) + '────'
         tab = [
