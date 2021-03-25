@@ -56,6 +56,71 @@ def stop_calc(values, above):
     input('\n\nAppuyer sur une touche pour quitter...')
     exit(0)
 
+def gen_tab(phase, tab_ln, values, lines, above, inside):
+    for ln in range(len(tab_ln)):
+        for cl in range(len(tab_ln[ln])):
+            float_current_number = float(tab_ln[ln][cl])
+            if str(float_current_number).endswith('.0'):
+                tab_ln[ln][cl] = int(tab_ln[ln][cl])
+
+    space = f'%-12s'
+
+    if phase == 1:
+        if not str(values[0]).startswith('-') or values[0] == 0:
+            value_z_prime = values[0]
+            sign_prime = '+'
+        else:
+            value_z_prime = values[0] * -1
+            sign_prime = '-'
+        line_tab = '──────────────' * (len(above) + 2) + '──'
+        tab = [
+            [space % ''],
+            [space % '', '', f'-Z\'{sign_prime}{value_z_prime}', lines[0]],
+            [space % '', '', f'Z', lines[1]],
+            [line_tab]
+        ]
+
+        for i in range(len(tab_ln[0])):
+            tab[1][1] += space % str(tab_ln[0][i]) + '│'
+        for i in range(len(tab_ln[1])):
+            tab[2][1] += space % str(tab_ln[1][i]) + '│'
+
+        tab[0] += [space % above[i] for i in range(len(above))]
+
+        for i in range(len(inside)):
+            tab.append([inside[i], '', values[i + 2], lines[i + 2]])
+            for val in range(len(tab_ln[i + 1])):
+                tab[i + 4][1] += space % str(tab_ln[i + 2][val]) + '│'
+
+    else:
+        if str(values[0]).startswith('-') or values[0] == 0:
+            value_z = values[0] * -1
+            sign = '-'
+        else:
+            value_z = values[0]
+            sign = '+'
+
+        line_tab = '───────────' * (len(above) + 4) + '───────'
+        tab = [
+            [space % ''],
+            [space % '', '', f'Z{sign}{value_z}', lines[0]],
+            [line_tab]
+        ]
+        for i in range(len(tab_ln[0])):
+            tab[1][1] += space % str(tab_ln[0][i]) + '│'
+
+        tab[0] += [space % above[i] for i in range(len(above))]
+
+        for i in range(len(inside)):
+            tab.append([inside[i], '', values[i + 1], lines[i + 1]])
+            for val in range(len(tab_ln[i + 1])):
+                tab[i + 3][1] += space % str(tab_ln[i + 1][val]) + '│'
+
+    for ln in range(len(tab)):
+        for cl in range(len(tab[ln])):
+            print(space % tab[ln][cl], end='│')
+        print()
+
 
 ###################
 # SIMPLEX DEUXIEME ESPECE
@@ -91,73 +156,8 @@ class DoubleSimplex:
         for i in range(len(self.constraints)):
             self.tab_ln.append(self.constraints[i] + self.e_inside[i] + self.f_inside[i] + self.a_inside[i])
 
-    def gen_tab(self):
-        for ln in range(len(self.tab_ln)):
-            for cl in range(len(self.tab_ln[ln])):
-                float_current_number = float(self.tab_ln[ln][cl])
-                if str(float_current_number).endswith('.0'):
-                    self.tab_ln[ln][cl] = int(self.tab_ln[ln][cl])
-
-        space = f'%-12s'
-
-        if self.phase == 1:
-            if not str(self.values[0]).startswith('-') or self.values[0] == 0:
-                value_z_prime = self.values[0]
-                sign_prime = '+'
-            else:
-                value_z_prime = self.values[0] * -1
-                sign_prime = '-'
-            line_tab = '──────────────' * (len(self.above) + 2) + '──'
-            tab = [
-                [space % ''],
-                [space % '', '', f'-Z\'{sign_prime}{value_z_prime}', self.lines[0]],
-                [space % '', '', f'Z', self.lines[1]],
-                [line_tab]
-            ]
-
-            for i in range(len(self.tab_ln[0])):
-                tab[1][1] += space % str(self.tab_ln[0][i]) + '│'
-            for i in range(len(self.tab_ln[1])):
-                tab[2][1] += space % str(self.tab_ln[1][i]) + '│'
-
-            tab[0] += [space % self.above[i] for i in range(len(self.above))]
-
-            for i in range(len(self.inside)):
-                tab.append([self.inside[i], '', self.values[i + 2], self.lines[i + 2]])
-                for val in range(len(self.tab_ln[i + 1])):
-                    tab[i + 4][1] += space % str(self.tab_ln[i + 2][val]) + '│'
-
-        else:
-            if str(self.values[0]).startswith('-') or self.values[0] == 0:
-                value_z = self.values[0] * -1
-                sign = '-'
-            else:
-                value_z = self.values[0]
-                sign = '+'
-
-            line_tab = '───────────' * (len(self.above) + 4) + '─────────'
-            tab = [
-                [space % ''],
-                [space % '', '', f'Z{sign}{value_z}', self.lines[0]],
-                [line_tab]
-            ]
-            for i in range(len(self.tab_ln[0])):
-                tab[1][1] += space % str(self.tab_ln[0][i]) + '│'
-
-            tab[0] += [space % self.above[i] for i in range(len(self.above))]
-
-            for i in range(len(self.inside)):
-                tab.append([self.inside[i], '', self.values[i + 1], self.lines[i + 1]])
-                for val in range(len(self.tab_ln[i + 1])):
-                    tab[i + 3][1] += space % str(self.tab_ln[i + 1][val]) + '│'
-
-        for ln in range(len(tab)):
-            for cl in range(len(tab[ln])):
-                print(space % tab[ln][cl], end='│')
-            print()
-
     def test_next_tab(self):
-        self.gen_tab()
+        gen_tab(self.phase, self.tab_ln, self.values, self.lines, self.above, self.inside)
 
         if self.phase == 1:
             for i in range(-1, len(self.lines)):
@@ -468,44 +468,8 @@ class SimpleSimplex:
         for i in range(len(self.constraints)):
             self.tab_ln.append(self.constraints[i] + self.e_inside[i])
 
-    def gen_tab(self):
-        if str(self.values[0]).startswith('-') or self.values[0] == 0:
-            value_z = self.values[0] * -1
-            sign = '-'
-        else:
-            value_z = self.values[0]
-            sign = '+'
-
-        for ln in range(len(self.tab_ln)):
-            for cl in range(len(self.tab_ln[ln])):
-                float_current_number = float(self.tab_ln[ln][cl])
-                if str(float_current_number).endswith('.0'):
-                    self.tab_ln[ln][cl] = int(self.tab_ln[ln][cl])
-
-        space = f'%-10s'
-        line_tab = '────────────' * (len(self.above) + 2) + '────'
-        tab = [
-            [space % ''],
-            [space % '', '', f'Z{sign}{value_z}', self.lines[0]],
-            [line_tab]
-        ]
-        for i in range(len(self.tab_ln[0])):
-            tab[1][1] += space % str(self.tab_ln[0][i]) + '│'
-
-        tab[0] += [space % self.above[i] for i in range(len(self.above))]
-
-        for i in range(len(self.inside)):
-            tab.append([self.inside[i], '', self.values[i + 1], self.lines[i + 1]])
-            for val in range(len(self.tab_ln[i + 1])):
-                tab[i + 3][1] += space % str(self.tab_ln[i + 1][val]) + '│'
-
-        for ln in range(len(tab)):
-            for cl in range(len(tab[ln])):
-                print(space % tab[ln][cl], end='│')
-            print()
-
     def test_next_tab(self):
-        self.gen_tab()
+        gen_tab(2, self.tab_ln, self.values, self.lines, self.above, self.inside)
 
         for i in range(len(self.lines)):
             self.lines[i] = f'l{i}'
