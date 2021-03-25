@@ -9,6 +9,29 @@ from sys import exit
 
 
 ###################
+# GLOBAL FUNCTION
+###################
+
+def which_number_types(result, number1, number2):
+    reformat_result = str(round(float(result), 3)).split('.')[1]
+
+    if str(float(result)).endswith('.0'):
+        return int(result)
+    elif any(reformat_result.count(x) > 1 for x in reformat_result):
+        if type(number1) != Fraction and type(number2) != Fraction:
+            if type(number1) == float:
+                number1 = Fraction(number1)
+            if type(number2) == float:
+                number2 = Fraction(number2)
+
+            return Fraction(number1, number2)
+
+        return result
+    else:
+        return round(float(result), 2)
+
+
+###################
 # SIMPLEX DEUXIEME ESPECE
 ###################
 
@@ -45,10 +68,10 @@ class DoubleSimplex:
     def gen_tab(self):
         if str(self.values[0]).startswith('-') or self.values[0] == 0:
             value_z_prime = self.values[0] * -1
-            sign_prime = '-'
+            sign_prime = '+'
         else:
             value_z_prime = self.values[0]
-            sign_prime = '+'
+            sign_prime = '-'
 
         if str(self.values[1]).startswith('-') or self.values[1] == 0:
             value_z = self.values[1] * -1
@@ -129,6 +152,8 @@ class SimpleSimplex:
                 if str(float_current_number).endswith('.0'):
                     self.tab_ln[ln][cl] = int(self.tab_ln[ln][cl])
 
+            print()
+
         space = f'%-10s'
         line_tab = '────────────' * (len(self.above) + 2) + '────'
         tab = [
@@ -196,11 +221,7 @@ class SimpleSimplex:
         for i in range(1, len(cl)):
             if cl[i] > 0:
                 tab_value.append(self.values[i] / cl[i])
-                tab_value_after_point = str(float(tab_value[i - 1])).split('.')[1]
-                if any(tab_value_after_point.count(x) > 1 for x in tab_value_after_point):
-                    tab_value[i - 1] = Fraction(self.values[i], cl[i])
-                else:
-                    tab_value[i - 1] = round(float(tab_value[i - 1]), 2)
+                tab_value[i - 1] = which_number_types(tab_value[i - 1], self.values[i], cl[i])
             else:
                 tab_value.append(100000000)
 
@@ -234,36 +255,14 @@ class SimpleSimplex:
                     (current_val_ln == self.tab_ln[i] and current_val_ln[idx] != 1):
 
                 if self.tab_ln[i][idx] != 0 and current_val_ln != self.tab_ln[i]:
-                    factor = float(self.tab_ln[i][idx]) / current_val_ln[idx]
+                    factor = self.tab_ln[i][idx] / current_val_ln[idx]
 
-                    if any(str(float(factor)).split('.')[1].count(x) > 1 for x in str(float(factor)).split('.')[1]):
-                        if type(self.tab_ln[i][idx]) != Fraction and type(current_val_ln[idx]) != Fraction:
-                            if type(self.tab_ln[i][idx]) == float:
-                                self.tab_ln[i][idx] = Fraction(self.tab_ln[i][idx])
-                            if type(current_val_ln[idx]) == float:
-                                current_val_ln[idx] = Fraction(current_val_ln[idx])
-
-                            factor = Fraction(self.tab_ln[i][idx], current_val_ln[idx])
-                    else:
-                        factor = float(factor)
+                    factor = which_number_types(factor, self.tab_ln[i][idx], current_val_ln[idx])
 
                 else:
                     factor = 1 / current_val_ln[idx]
 
-                    if any(str(float(factor)).split('.')[1].count(x) > 1 for x in str(float(factor)).split('.')[1]):
-                        if type(current_val_ln[idx]) != Fraction:
-                            if type(current_val_ln[idx]) == float:
-                                current_val_ln[idx] = Fraction(current_val_ln[idx])
-
-                            factor = Fraction(1, current_val_ln[idx])
-                    else:
-                        factor = float(factor)
-
-                if str(factor).endswith('.0'):
-                    factor = int(factor)
-
-                elif '.' in str(factor) and len(str(factor).split('.')[1]) > 2:
-                    factor = round(factor, 2)
+                    factor = which_number_types(factor, 1, current_val_ln[idx])
 
                 current_ln_with_factor = [i * abs(factor) for i in current_val_ln]
 
@@ -280,11 +279,7 @@ class SimpleSimplex:
                         new_current_ln.append(current_ln_with_factor[val])
 
                 for val in range(len(self.tab_ln[i])):
-                    if str(self.tab_ln[i][val]).endswith('.0'):
-                        self.tab_ln[i][val] = int(self.tab_ln[i][val])
-
-                    elif '.' in str(self.tab_ln[i][val]) and len(str(self.tab_ln[i][val]).split('.')[1]) > 2:
-                        self.tab_ln[i][val] = round(self.tab_ln[i][val], 2)
+                    self.tab_ln[i][val] = which_number_types(self.tab_ln[i][val], self.tab_ln[i][val], 1)
 
                 if str(factor).startswith('-'):
                     sign = '+'
@@ -303,31 +298,19 @@ class SimpleSimplex:
                 else:
                     new_value = factor * self.values[self.tab_ln.index(current_val_ln)]
 
-                if str(self.values[i]).endswith('.0'):
-                    self.values[i] = int(self.values[i])
-
-                elif '.' in str(self.values[i]) and len(str(self.values[i]).split('.')[1]) > 2:
-                    self.values[i] = round(self.values[i], 2)
+                self.values[i] = which_number_types(self.values[i], self.values[i], 1)
 
             else:
                 continue
 
         if new_value != -1:
-            if str(new_value).endswith('.0'):
-                new_value = int(new_value)
-
-            elif '.' in str(new_value) and len(str(new_value).split('.')[1]) > 2:
-                new_value = round(new_value, 2)
+            new_value = which_number_types(new_value, new_value, 1)
 
             self.values[self.tab_ln.index(current_ln)] = new_value
 
         if len(new_current_ln) > 0:
             for i in range(len(new_current_ln)):
-                if str(new_current_ln[i]).endswith('.0'):
-                    new_current_ln[i] = int(new_current_ln[i])
-
-                elif '.' in str(new_current_ln[i]) and len(str(new_current_ln[i]).split('.')[1]) > 2:
-                    new_current_ln[i] = round(new_current_ln[i], 2)
+                new_current_ln[i] = which_number_types(new_current_ln[i], new_current_ln[i], 1)
 
             self.tab_ln[self.tab_ln.index(current_ln)] = new_current_ln
 
@@ -348,20 +331,19 @@ if __name__ == "__main__":
 
     witch_simplex = str(input('Simplex de première ou seconde espèce ? (1/2) '))
 
+    nb_function = int(input('\nCombien il y a-t-il de x dans la fonction ? '))
+    above = [f'x{i + 1}' for i in range(nb_function)]
+
+    print()
+    for i in range(nb_function):
+        function.append(float(input(f'Combien vaut x{i + 1} ? ')))
+        if str(function[i]).endswith('.0'):
+            function[i] = int(function[i])
+
+    nb_contraintes = int(input('\nCombien il y a-t-il de contraintes (hors x1, x2, ..., xn >= 0) ? '))
+
     if witch_simplex == '1':
-
-        nb_function = int(input('\nCombien il y a-t-il de x dans la fonction ? '))
-        above = [f'x{i + 1}' for i in range(nb_function)]
-
-        print()
-        for i in range(nb_function):
-            function.append(float(input(f'Combien vaut x{i + 1} ? ')))
-            if str(function[i]).endswith('.0'):
-                function[i] = int(function[i])
-
-        nb_contraintes = int(input('\nCombien il y a-t-il de contraintes (hors x1, x2, ..., xn >= 0) ? '))
         line = [f'l{i}' for i in range(nb_contraintes + 1)]
-
         for i in range(nb_contraintes):
             print()
             new_contraintes = []
@@ -409,19 +391,10 @@ if __name__ == "__main__":
         contraintes_inf = 0
         contraintes_supp = 0
 
-        nb_function = int(input('\nCombien il y a-t-il de x dans la fonction ? '))
-        above = [f'x{i + 1}' for i in range(nb_function)]
+        line = [f'l{i}' for i in range(-1, nb_contraintes + 1)]
+
         for i in range(nb_function):
             function_top.append(0)
-
-        print()
-        for i in range(nb_function):
-            function.append(float(input(f'Combien vaut x{i + 1} ? ')))
-            if str(function[i]).endswith('.0'):
-                function[i] = int(function[i])
-
-        nb_contraintes = int(input('\nCombien il y a-t-il de contraintes (hors x1, x2, ..., xn >= 0) ? '))
-        line = [f'l{i}' for i in range(-1, nb_contraintes + 1)]
 
         for i in range(nb_contraintes):
             print()
